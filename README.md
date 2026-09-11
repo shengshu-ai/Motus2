@@ -3,7 +3,7 @@
 # Motus2: A Self-Evolving General World Model for Dexterous Manipulation
 
 [![Project Page](https://img.shields.io/badge/Project-Page-1f6feb?logo=googlechrome&logoColor=white)](https://motus-robotics.github.io/motus2/)
-[![arXiv](https://img.shields.io/badge/arXiv-2608.30237-b31b1b?logo=arxiv&logoColor=white)](https://arxiv.org/abs/2608.30237)
+[![arXiv](https://img.shields.io/badge/arXiv-2608.30237-b31b1b?logo=arxiv&logoColor=white)](https://arxiv.org/abs/2608.30237v2)
 [![Hugging Face](https://img.shields.io/badge/Hugging_Face-Models-FFD21E?logo=huggingface&logoColor=black)](https://huggingface.co/motus-robotics)
 
 </div>
@@ -35,7 +35,7 @@ On the data side, Motus2 progresses from large-scale monocular egocentric data t
 ## Links
 
 - [Project page](https://motus-robotics.github.io/motus2/)
-- [Paper](https://arxiv.org/abs/2608.30237)
+- [Paper](https://arxiv.org/abs/2608.30237v2)
 - [Models](https://huggingface.co/motus-robotics)
 
 ## Citation

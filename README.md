@@ -27,7 +27,7 @@ On the data side, Motus2 progresses from large-scale monocular egocentric data t
 - [ ] Stage 1 pretraining checkpoints
 - [ ] Stage 2 pretraining checkpoints
 - [ ] Video pretraining code (Stage 1)
-- [ ] Video–Action–Value training code (Stage 2 pretraining, mid-training, and post-training)
+- [ ] Video–Action (Value) training code (Stage 2 pretraining, mid-training, and post-training)
 - [ ] MBRL code
 - [ ] Memory and variable-length training infrastructure
 - [ ] Tactile code

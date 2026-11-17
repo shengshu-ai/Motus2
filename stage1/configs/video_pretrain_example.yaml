@@ -1,0 +1,81 @@
+# Motus2 Stage 1 example: bidirectional flow-matching video pretraining of
+# Wan2.2-TI2V-5B on pre-computed 48-channel VAE latents and UMT5 text embeddings.
+# Model and dataset defaults are defined by the training entry and loaders.
+#
+#   CONFIG=configs/video_pretrain_example.yaml RUN_NAME=video_pretrain \
+#     bash scripts/train_video_pretrain.sh
+#
+# Replace the /path/to/... placeholders before launching.
+
+common:
+  max_latent_window: 20
+  shift: 5.0
+  timestep_sample_method: logit_normal
+  cond_frame_prob_multi: 0.5
+  cond_noise_prob: 0.5
+  cond_noise_std: 1.0
+  lang_uncond_prob: 0.1
+
+dataset:
+  # Directory scan of <dataset_dir>/<dataset>/<task>/<episode>/, where each episode holds
+  # video_features/wan2.2/<N>phase_5hz/<latent_file_name> and text_features/UMT5/*.pt.
+  dataset_dir: /path/to/video_latents
+  use_index_cache: true
+  # Null writes the episode index under ~/.cache/motus2/. Multi-node runs need a path on
+  # storage shared by all nodes: global rank 0 builds the index and the other ranks read it.
+  index_cache_path: null
+  task_mode: multi
+  latent_root: video_features/wan2.2
+  latent_file_name: video_512_512_VAE.pt
+  latent_phases: [0]
+  lang_root: text_features/UMT5
+  lang_subpath: null
+  # UMT5 embedding of the empty caption for language dropout; create it with
+  #   python scripts/encode_caption.py --wan-path /path/to/Wan2.2-TI2V-5B --caption '' --output /path/to/empty_umt5.pt
+  empty_lang_embed_path: /path/to/empty_umt5.pt
+
+model:
+  wan:
+    checkpoint_path: /path/to/Wan2.2-TI2V-5B
+    precision: bfloat16
+    gradient_checkpointing: false
+
+training:
+  # Global batch = GPUs x batch_size x gradient_accumulation_steps.
+  batch_size: 1
+  gradient_accumulation_steps: 4
+  learning_rate: 1.0e-5
+  weight_decay: 0.01
+  max_steps: 1000000
+  grad_clip_norm: 0.5
+  scheduler_type: warmup_constant
+  warmup_steps: 1000
+  f_start: 0.0
+  f_max: 1.0
+
+evaluation:
+  enabled: true
+  interval: 5000
+  num_batches: 1
+  num_inference_steps: 10
+  num_condition_latents: 1
+  tensorboard_log_video: true
+  tensorboard_video_fps: 8
+  tensorboard_max_video_frames: 0
+
+system:
+  checkpoint_dir: ./checkpoints/video_pretrain
+  log_interval: 1
+  save_interval: 10000
+  num_workers: 16
+  distributed_timeout_sec: 1800
+  nccl_async_error_handling: true
+
+logging:
+  tensorboard_log_dir: tensorboard_logs
+  dataset_warning_log_dir: dataset_warnings
+
+resume:
+  checkpoint_path: null
+finetune:
+  checkpoint_path: null

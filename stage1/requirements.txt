@@ -1,0 +1,29 @@
+# Python 3.10; install a PyTorch build compatible with your CUDA environment.
+torch>=2.7.1,<2.12
+torchvision>=0.22.1,<0.27
+accelerate>=1.13.0,<1.14
+deepspeed>=0.17.5,<0.20
+diffusers>=0.38.0,<0.39
+transformers>=5.9.0,<5.10
+einops>=0.8.0
+safetensors>=0.4.0
+omegaconf>=2.3.0,<2.4
+numpy>=1.24.0,<2.3
+scipy>=1.11.0
+pillow>=10.0.0,<13
+imageio>=2.31.0
+matplotlib>=3.7.0
+tqdm>=4.66.0
+easydict>=1.13
+ftfy>=6.3.1
+regex
+wandb>=0.16.0
+tensorboard>=2.15.0
+
+# Recommended for practical GPU training; install after torch:
+#   pip install "flash-attn>=2.8.3" --no-build-isolation
+# Both backends honor real sequence lengths; FlashAttention avoids a dense SDPA mask.
+
+# Episode index backends
+megfile             # s3:// / bos:// dataset paths (imported unconditionally)
+duckdb              # DuckDB episode index (imported unconditionally)

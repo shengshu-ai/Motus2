@@ -1,0 +1,97 @@
+# SFT with a native-frequency Stage2 base; match this to the actual parent.
+common:
+  video_height: 384
+  video_width: 640
+  num_views: 2
+  video_action_freq_ratio: 6
+  max_latent_window: 8
+  chunk_window_range:
+  - 1
+  - 3
+  chunk_window_size: 2
+  video_rope_mode: window
+  video_view_rope_mode: hw_offset
+dataset:
+  type: tianji_wuji
+  episode_index_source: dataset_dir
+  dataset_dir: /path/to/dexhand_dataset
+  use_index_cache: false
+  latent_root: video_features/wan2.2
+  latent_phases: null
+  latent_resolution: '384_640'
+  language_subpath: text_features/UMT5
+  action_stats_path: /path/to/dexhand_action_stats.json
+  action:
+    raw_hz: 60
+    train_hz: 30
+  task_mode: multi
+  task_name: null
+  include_fail: true
+  fail_sample_fraction: 0.1
+  validation_fraction: 0.02
+  validation_seed: 42
+model:
+  wan:
+    checkpoint_path: /path/to/Wan2.2-TI2V-5B
+    precision: bfloat16
+    gradient_checkpointing: false
+  action_expert:
+    hidden_size: 1024
+    ffn_dim_multiplier: 4
+    norm_eps: 1.0e-06
+  fixed_chunk_size: 2
+  use_state: false
+  action_mode: qpos20_rel6d
+  normalization:
+    hand: min_max
+    wrist_xyz: min_max
+  action_from_state: true
+  mode: action_only
+  wm_ratio: 0.1
+  inference:
+    num_inference_timesteps: 5
+  loss_weights:
+    video_loss_weight: 1.0
+    action_loss_weight: 1.0
+    uniform_loss_weight_warmup_steps: 1000
+    hand_qpos_loss_weight: 1.0
+    rel_eef_position_loss_weight: 10.0
+    rel_eef_rotation_loss_weight: 1.0
+  noisy_history_prob: 0.5
+  noisy_history_sigma_max: 1.0
+  value:
+    enabled: true
+    target: vlac
+    num_value_tokens: 1
+    num_bins: 201
+    value_loss_weight: 0.05
+    vm_ratio: 0.05
+training:
+  batch_size: 2
+  gradient_accumulation_steps: 1
+  max_steps: 100000
+  learning_rate: 2.0e-05
+  weight_decay: 0.01
+  scheduler_type: linear
+  warmup_steps: 200
+  cycle_length: 5000000
+  f_max: 0.99
+  f_min: 0.4
+  grad_clip_norm: 0.5
+system:
+  checkpoint_dir: ./checkpoints
+  log_interval: 1
+  save_interval: 5000
+  val_interval: 1000
+  distributed_timeout_sec: 1800
+  num_workers: 16
+  prefetch_factor: 1
+  pin_memory: true
+logging:
+  report_to: tensorboard
+  tensorboard_log_dir: tensorboard_logs
+  run_name: null
+resume:
+  checkpoint_path: null
+finetune:
+  checkpoint_path: /path/to/stage2_checkpoint/checkpoint_step_N

@@ -1,0 +1,108 @@
+# Motus2 Memory example: MemoryWAM on the RMBench memory tasks (RoboTwin-format latents,
+# 14-D joint actions), fine-tuned from a Stage 2 checkpoint. Whole episodes are packed into
+# one attention sequence under a latent budget; every chunk sees 2 anchor latents, the 4 most
+# recent latents at full resolution and 8 gist tokens for each older latent.
+# Every key is documented in configs/template.yaml.
+#
+# Launch from the repository root (system.deepspeed_config and logging.run_name are read
+# from this file):
+#   torchrun --nproc_per_node=8 train/train.py --config configs/memory_rmbench_example.yaml
+#
+# Replace the /path/to/... placeholders before launching.
+
+common:
+  video_height: 384
+  video_width: 320
+  video_action_freq_ratio: 6
+  max_latent_window: 128
+
+dataset:
+  type: robotwin
+  # <dataset_dir>/clean/<task>/{vae_latents,qpos,umt5_wan}/<episode>.pt
+  dataset_dir:
+    - /path/to/rmbench_latents
+  data_mode: clean
+  task_mode: multi
+  task_name: null
+  latent_dir: vae_latents
+  language_embedding_dir: umt5_wan
+  validation_fraction: 0.02
+  validation_seed: 42
+  sequence_mode: episode
+  sequence_overflow_policy: error
+  sequence_phase_policy: random
+  # Must stay false with sequence_mode: episode; length bucketing then uses per-episode lengths.
+  length_index: false
+
+model:
+  wan:
+    checkpoint_path: /path/to/Wan2.2-TI2V-5B
+    precision: bfloat16
+    gradient_checkpointing: true
+  action_expert:
+    hidden_size: 1024
+    ffn_dim_multiplier: 4
+    norm_eps: 1.0e-6
+  fixed_chunk_size: 2
+  use_state: true
+  action_mode: joint
+  memory:
+    anchor_latents: 2
+    recent_latents: 4
+    gist_tokens_per_frame: 8
+  action_rope_mode: video_shared
+  video_timestep_shift: 5.0
+  action_timestep_shift: 1.0
+  inference:
+    num_inference_timesteps: 50
+  loss_weights:
+    video_loss_weight: 1.0
+    action_loss_weight: 1.0
+  noisy_history_prob: 0.0
+
+training:
+  # Only used when length bucketing is off, and in the default run name.
+  batch_size: 4
+  gradient_accumulation_steps: 1
+  max_steps: 25000
+  learning_rate: 5.0e-5
+  weight_decay: 0.01
+  scheduler_type: linear
+  warmup_steps: 200
+  cycle_length: 5000000
+  f_start: 1.0e-6
+  f_max: 0.99
+  f_min: 0.4
+  grad_clip_norm: 0.5
+  length_bucketing:
+    enabled: true
+    latent_budget: 200
+    mbs: 8
+    over_budget_policy: allow_single
+    mega_batch_factor: 20
+    shuffle: true
+    drop_last: true
+    seed: 0
+
+system:
+  checkpoint_dir: ./checkpoints
+  deepspeed_config: configs/zero1.json
+  distributed_timeout_sec: 1800
+  eval_enabled: false
+  log_level: INFO
+  log_interval: 1
+  save_interval: 2500
+  val_interval: 0
+  num_workers: 4
+  pin_memory: true
+  prefetch_factor: 2
+
+logging:
+  report_to: tensorboard
+  tensorboard_log_dir: tensorboard_logs
+  run_name: null
+
+resume:
+  checkpoint_path: null
+finetune:
+  checkpoint_path: /path/to/stage2_checkpoint/checkpoint_step_N

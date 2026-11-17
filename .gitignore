@@ -1,0 +1,10 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+checkpoints/
+logs/
+wandb/
+tensorboard_logs/
+outputs/
+.ruff_cache/

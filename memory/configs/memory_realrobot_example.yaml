@@ -1,0 +1,126 @@
+# Motus2 Memory example: MemoryWAM on real-robot data (dual 20-DoF dexterous hands,
+# qpos20_rel6d actions, one pre-concatenated 384x640 camera view), fine-tuned from a
+# Stage 2 checkpoint.
+# Whole episodes are packed into one attention sequence under a latent budget; every chunk
+# sees 2 anchor latents, the 4 most recent latents at full resolution and 8 gist tokens for
+# each older latent. Every key is documented in configs/template.yaml.
+#
+# Launch from the repository root (system.deepspeed_config and logging.run_name are read
+# from this file):
+#   torchrun --nproc_per_node=8 train/train.py --config configs/memory_realrobot_example.yaml
+#
+# Replace the /path/to/... placeholders before launching.
+
+common:
+  video_height: 384
+  video_width: 640
+  video_action_freq_ratio: 6
+  max_latent_window: 128
+
+dataset:
+  type: tianji_wuji
+  # <dataset_dir>/<task>/<episode>/ with hand_qpos.pt, arm_endpose.pt, hand_action.pt,
+  # arm_action_endpose.pt, video_features/wan2.2/<N>phase_5hz/<single_latent_name> and
+  # text_features/UMT5/*.pt (one embedding file per instruction variant, sampled per item).
+  episode_index_source: dataset_dir
+  dataset_dir: /path/to/dexhand_dataset
+  use_index_cache: false
+  latent_root: video_features/wan2.2
+  latent_phases: null
+  single_latent_name: video_concat_384_640_VAE.pt
+  language_subpath: text_features/UMT5
+  # Hand qpos and wrist-relative xyz statistics of this robot.
+  action_stats_path: /path/to/dexhand_action_stats.json
+  action_from_state: false
+  action_upsample_ratio: 1
+  action:
+    raw_hz: 60
+    train_hz: 30
+    adaptive_raw_hz_from_task_name: true
+  task_mode: multi
+  task_name:
+    - your_task
+  include_fail: false
+  include_old: false
+  sequence_mode: episode
+  sequence_overflow_policy: error
+
+model:
+  wan:
+    checkpoint_path: /path/to/Wan2.2-TI2V-5B
+    precision: bfloat16
+    gradient_checkpointing: true
+  action_expert:
+    hidden_size: 1024
+    ffn_dim_multiplier: 4
+    norm_eps: 1.0e-6
+  fixed_chunk_size: 2
+  use_state: false
+  action_mode: qpos20_rel6d
+  normalization:
+    hand: min_max
+    wrist_xyz: min_max
+  memory:
+    anchor_latents: 2
+    recent_latents: 4
+    gist_tokens_per_frame: 8
+  action_rope_mode: video_shared
+  video_timestep_shift: 5.0
+  action_timestep_shift: 1.0
+  inference:
+    num_inference_timesteps: 50
+  loss_weights:
+    video_loss_weight: 1.0
+    action_loss_weight: 1.0
+    hand_qpos_loss_weight: 1.0
+    rel_eef_position_loss_weight: 10.0
+    rel_eef_rotation_loss_weight: 1.0
+  noisy_history_prob: 0.2
+  noisy_history_sigma_max: 1.0
+
+training:
+  # Only used when length bucketing is off, and in the default run name.
+  batch_size: 4
+  gradient_accumulation_steps: 1
+  max_steps: 10000
+  learning_rate: 2.0e-5
+  weight_decay: 0.01
+  scheduler_type: linear
+  warmup_steps: 200
+  cycle_length: 5000000
+  f_start: 1.0e-6
+  f_max: 0.99
+  f_min: 0.4
+  grad_clip_norm: 0.5
+  length_bucketing:
+    enabled: true
+    latent_budget: 100
+    mbs: 8
+    over_budget_policy: allow_single
+    mega_batch_factor: 20
+    shuffle: true
+    drop_last: true
+    seed: 0
+
+system:
+  checkpoint_dir: ./checkpoints
+  deepspeed_config: configs/zero1.json
+  distributed_timeout_sec: 1800
+  eval_enabled: false
+  log_level: INFO
+  log_interval: 1
+  save_interval: 2500
+  val_interval: 0
+  num_workers: 4
+  pin_memory: true
+  prefetch_factor: 2
+
+logging:
+  report_to: tensorboard
+  tensorboard_log_dir: tensorboard_logs
+  run_name: null
+
+resume:
+  checkpoint_path: null
+finetune:
+  checkpoint_path: /path/to/stage2_checkpoint/checkpoint_step_N

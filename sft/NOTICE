@@ -1,0 +1,27 @@
+Motus2
+Copyright 2026 The Motus2 Authors.
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE) and
+includes third-party code:
+
+third_party/wan/
+  Wan2.2, https://github.com/Wan-Video/Wan2.2
+  Copyright 2024-2025 The Alibaba Wan Team Authors.
+  Apache License 2.0, see third_party/wan/LICENSE.txt.
+  Compared against upstream commit 1ea34ff48f87168174e12956e200b1d908b1c5ff.
+  Modified by the Motus2 authors: __init__.py, configs/__init__.py,
+  distributed/fsdp.py, modules/attention.py, modules/model.py,
+  modules/vae2_2.py, modules/t5.py, utils/utils.py. Files not needed here were removed.
+  Within Wan2.2, utils/fm_solvers.py and utils/fm_solvers_unipc.py derive from
+  Hugging Face diffusers and modules/t5.py from Hugging Face transformers,
+  both Apache License 2.0.
+
+third_party/wan/utils/fm.py
+  Adapted from DiffSynth-Studio, https://github.com/modelscope/DiffSynth-Studio,
+  diffsynth/schedulers/flow_match.py. Apache License 2.0.
+  Modified by the Motus2 authors.
+
+accel/
+  Optional kernels are loaded at runtime from FlashRT,
+  https://github.com/flashrt-project/FlashRT (Apache License 2.0), which is not
+  included in this repository.

@@ -1,0 +1,43 @@
+# Policy server config. Paths are placeholders.
+
+server:
+  host: 127.0.0.1        # use 0.0.0.0 to accept remote clients (no authentication)
+  port: 8000
+
+protocol:
+  transport: raw_rgb8    # raw_rgb8 (lossless) | jpeg | png; clients must match
+  jpeg_quality: 95
+
+model:
+  training_config: configs/your_training_config.yaml   # the YAML the checkpoint was trained with
+  checkpoint: /path/to/checkpoint_step_xxxx            # dir with pytorch_model/mp_rank_00_model_states.pt
+  wan_path: /path/to/Wan2.2-TI2V-5B                    # config.json, Wan2.2_VAE.pth, UMT5 weights
+  action_stats_path: null     # override dataset.action_stats_path of the training config
+  device: cuda
+  strict_load: true
+
+language:
+  # UMT5 defaults to <wan_path>/models_t5_umt5-xxl-enc-bf16.pth and
+  # <wan_path>/google/umt5-xxl; it is loaded only when an instruction is encoded.
+  t5_checkpoint: null
+  t5_tokenizer: null
+  device: null                # defaults to model.device
+  embeddings_dir: null        # optional root for {"lang_embedding_path": ...}
+  default_instruction: null
+
+vision:
+  # Camera names sent by the client, in the order the training data used.
+  cameras: [head_camera, left_camera, right_camera]   # RoboTwin names
+  # The memory model is single-view; several cameras must be composed into one frame.
+  # views  : exactly one camera (or a frame composed by the client)
+  # grid   : cameras stitched row-major into grid [rows, cols] of cell_size [h, w]
+  # tshape : first camera on top, the rest side by side below at half height
+  layout: tshape
+  grid: [2, 2]
+  cell_size: [360, 640]
+  interpolation: null         # linear | area (default: area for grid, linear otherwise)
+
+inference:
+  # null: model.inference.num_inference_timesteps of the training config. The
+  # whole chunk must be predicted well within the time it takes to execute.
+  num_inference_steps: null

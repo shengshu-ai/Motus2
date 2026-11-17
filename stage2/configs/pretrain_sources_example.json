@@ -1,0 +1,20 @@
+{
+  "stereo_latent_sources": [
+    {
+      "name": "source_a",
+      "source": "/path/to/pretrain_data/source_a",
+      "resolution_bucket": "512x512",
+      "left_latent_name": "cam_left_512_512_VAE.pt",
+      "right_latent_name": "cam_right_512_512_VAE.pt",
+      "ratio": 2.0
+    },
+    {
+      "name": "source_b",
+      "source": "/path/to/pretrain_data/source_b",
+      "resolution_bucket": "384x640",
+      "left_latent_name": "cam_left_384_640_VAE.pt",
+      "right_latent_name": "cam_right_384_640_VAE.pt",
+      "ratio": 1.0
+    }
+  ]
+}
